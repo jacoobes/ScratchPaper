@@ -1,99 +1,37 @@
-# PaperMC/Spigot Minecraft Server Plugin Template
-A template for building PaperMC/Spigot Minecraft server plugins!
+# plugin-template
+Template for building PaperMC plugins
 
-[![Build, Test, and Release](https://github.com/CrimsonWarpedcraft/plugin-template/actions/workflows/main.yml/badge.svg)](https://github.com/CrimsonWarpedcraft/plugin-template/actions/workflows/main.yml)
+## Setup
 
-## Features
-### Github Actions 🎬
-* Automated builds, testing, and release drafting
-* [Discord notifcations](https://github.com/marketplace/actions/discord-message-notify) for snapshots and releases
+In order to use this template for yourself, there are a few things that you will need to change.
 
-### Bots 🤖
-* **Probot: Stale**
-    * Mark issues stale after 30 days
-* **Dependabot**
-    * Update GitHub Actions workflows
-    * Update Gradle dependencies
-
-### Issue Templates 📋
-* Bug report template
-* Feature request template
-
-### Gradle Builds 🏗
-* Shadowed [PaperLib](https://github.com/PaperMC/PaperLib) build
-* [Checkstyle](https://checkstyle.org/) Google standard style check
-* [SpotBugs](https://spotbugs.github.io/) code analysis
-* [JUnit](https://junit.org/) testing
-
-### Config Files 📁
-* Sample plugin.yml with autofill name, version, and main class.
-* Empty config.yml (just to make life \*that\* much easier)
-* Gradle build config
-* Simple .gitignore for common Gradle files
-
-## Usage
-In order to use this template for yourself, there are a few things that you will need to keep in mind.
-
-### Release Info
-Stable versions of this repo are tagged `vX.Y.Z` and have an associated [release](https://github.com/CrimsonWarpedcraft/plugin-template/releases).
-
-Testing versions of this repo are tagged `vX.Y.Z-RC-N` and have an associated [pre-release](https://github.com/CrimsonWarpedcraft/plugin-template/releases).
-
-Development versions of this repo are pushed to the master branch and are **not** tagged.
-
-#### Release and Versioning Strategy
-| Event             | Version Format       | CI Action                        | GitHub Release Draft? |
-|-------------------|----------------------|----------------------------------|-----------------------|
-| PR                | yyMMdd-HHmm-SNAPSHOT | Build and test                   | No                    |
-| Schedule          | yyMMdd-HHmm-SNAPSHOT | Build, test, and notify          | No                    |
-| Push to `main`    | 0.0.0-SNAPSHOT       | Build, test, release, and notify | No                    |
-| Tag `vX.Y.Z-RC-N` | X.Y.Z-SNAPSHOT       | Build, test, release, and notify | Pre-release           |
-| Tag `vX.Y.Z`      | X.Y.Z                | Build, test, release, and notify | Release               |
-
-### Discord Notifications
-In order to use Discord notifications, you will need to create two GitHub secrets. `DISCORD_WEBHOOK_ID` 
-should be set to the id of your Discord webhook. `DISCORD_WEBHOOK_TOKEN` will be the token for the webhook.
-
-You can find these values by copying the Discord Webhook URL:  
-`https://discord.com/api/webhooks/<DISCORD_WEBHOOK_ID>/<DISCORD_WEBHOOK_TOKEN>`
-
-For more information, see [Discord Message Notify](https://github.com/marketplace/actions/discord-message-notify).
-
----
-
-**I've broken the rest of the changes up by their files to make things a bit easier to find.**
-
----
+I've broken the changes up by their files to make things a bit easier to find.
 
 ### settings.gradle
+
 Update the line below with the name of your plugin.
 
 ```groovy
-rootProject.name = 'ExamplePlugin'
+rootProject.name = 'plugin-template'
 ```
 
 ### build.gradle
-Make sure to update the `group` to your package's name in the following section.
+
+You may want to set a new version number, but this will probably be more important when [Creating a Release](#creating-a-release).
 
 ```groovy
-group = "com.crimsonwarpedcraft.exampleplugin"
+version '0.1.0-SNAPSHOT'
 ```
 
 Add any required repositories for your dependencies in the following section.
 
 ```groovy
 repositories {
+    mavenCentral()
     maven {
         name 'papermc'
         url 'https://papermc.io/repo/repository/maven-public/'
-        content {
-            includeModule("io.papermc.paper", "paper-api")
-            includeModule("io.papermc", "paperlib")
-            includeModule("net.md-5", "bungeecord-chat")
-        }
     }
-
-    mavenCentral()
 }
 ```
 
@@ -101,28 +39,54 @@ Also, update your dependencies as needed (of course).
 
 ```groovy
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT'
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.7.3'
-    implementation 'io.papermc:paperlib:1.0.8'
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
-    testCompileOnly 'com.github.spotbugs:spotbugs-annotations:4.7.3'
-    testImplementation 'io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+    implementation "io.papermc:paperlib:1.0.5"
+    implementation group: 'com.destroystokyo.paper', name: 'paper-api', version: '1.16.1-R0.1-SNAPSHOT'
 }
 ```
 
-### src/main/resources/plugin.yml
-First, update the following with your information.
+Lastly, you probably want to update your package names on the `relocate` line below.
 
-```yaml
+```groovy
+shadowJar {
+    relocate 'io.papermc.lib', 'com.snowypeaksystems.' + rootProject.name + '.paperlib'
+    minimize()
+}
+```
+
+### .github/tag.yml
+
+In the following section, you will need to replace "plugin-template.jar" in `asset_path` and `asset_name` with the name of your plugin (see [settings.gradle](#settingsgradle)).
+
+```yml
+- name: Upload Release Asset
+  uses: actions/upload-release-asset@v1
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    upload_url: ${{ steps.create_release.outputs.upload_url }}
+    asset_path: ${{ github.workspace }}/build/libs/plugin-template.jar
+    asset_name: plugin-template.jar
+    asset_content_type: application/java-archive
+```
+
+### src/main/resources/plugin.yml
+
+First, you'll need to replace `com.snowypeaksystems` on the line below with your package's name.
+
+```yml
+main: com.snowypeaksystems.${NAME}.${NAME}
+```
+
+Next, update the following with your information.
+
+```
 author: AUTHOR
 description: DESCRIPTION
 ```
 
-Next, the `commands` and `permissions` sections below should be updated as needed.
+The `commands` and `permissions` sections below are provided as examples and should be updated according to your needs.
 
-```yaml
+```yml
 commands:
   ex:
     description: Base command for EXAMPLE
@@ -139,56 +103,48 @@ permissions:
       example.test: true
 ```
 
-### .github/dependabot.yml
-You will need to replace all instances of `leviem1`, such as the one below, with your GitHub
-username.
-
-```yaml
-reviewers:
-  - "leviem1"
-```
-
-### .github/CODEOWNERS
-You will need to replace `leviem1`, with your GitHub username.
-
-```text
-*   @leviem1
-```
-
-### .github/FUNDING.yml
-Update or delete this file, whatever applies to you.
-
-```yaml
-github: leviem1
-```
-
-For more information see: [Displaying a sponsor button in your repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository)
-
-### CODE_OF_CONDUCT.md
-If you chose to adopt a Code of Conduct for your project, please update line 63 with your preferred
-contact method.
-
 ## Creating a Release
+
 Below are the steps you should follow to create a release.
 
-1. Create a tag on `main` using semantic versioning (e.g. v0.1.0)
-2. Push the tag and get some coffee while the workflows run
-3. Publish the release draft once it's been automatically created
-
-## Building locally
-Thanks to [Gradle](https://gradle.org/), building locally is easy no matter what platform you're on. Simply run the following command:
-
-```text
-./gradlew build
-```
-
-This build step will also run all checks and tests, making sure your code is clean.
-
-JARs can be found in `build/libs/`.
+1. Make sure to update the `version` in [build.gradle](#buildgradle)
+2. Create a tag at the desired commit on `master` and push it to `origin`
+3. Add a description to the release draft in the releases page
 
 ## Contributing
-See [CONTRIBUTING.md](https://github.com/CrimsonWarpedcraft/plugin-template/blob/main/CONTRIBUTING.md).
+
+### General workflow
+
+1. First, pull any changes from `master` to make sure you're up-to-date
+2. Create a branch from `master`
+    * Give your branch a name that describes your change (e.g. add-scoreboard)
+    * Focus on one change per branch
+    * Keep your commits small, and write descriptive commit messages
+3. When you're ready, create a pull request to `master` with a descriptive title, and listing any changes made its description
+    * Link any issues that your pull request is related to as well
+
+#### Example:
+```
+Create scoreboard for total points
+
+ADDED - Scoreboard displayed at in-game at game end  
+CHANGED - Updated `StorageManager` class to persist scoreboard data
+```
+
+After the pull request is reviewed, approved, and passes all automated checks, it will be merged into master.
+
+### Building locally
+
+Thanks to [Gradle](https://gradle.org/), building locally is easy no matter what platform you're on. Simply run the following command:
+
+#### macOS/Linux/Unix/
+`./gradlew build`
+
+#### Windows
+`gradlew.bat build`
+
+This build step will also run all checks, making sure your code is clean.
 
 ---
 
-I think that's all... phew! Oh, and update this README! ;)
+I think that's all... phew!
