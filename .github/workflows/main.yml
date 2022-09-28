@@ -14,6 +14,8 @@ on:
   workflow_dispatch:
 
 concurrency:
+  # Allow concurrent run for main, MR, and tag
+  # Disallow concurrent runs on same MRs, tags, and main (triggered by dispatch, schedule, or push)
   group: ${{ format('{0}-{1}', github.job, github.ref) }}
   cancel-in-progress: true
 
@@ -26,41 +28,26 @@ jobs:
         java: [ 17 ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Common Setup
-        uses: ./.github/actions/common-setup
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.java }}
+          distribution: 'zulu'
 
-      - name: Retrieve Project Name
-        run: echo "PROJECT_NAME=$(${{github.workspace}}/gradlew -q printProjectName)" >> $GITHUB_OUTPUT
-        id: project_name
-
-      - name: Get Project Name
-        run: echo "PROJECT_NAME=${{steps.project_name.outputs.PROJECT_NAME}}" >> $GITHUB_ENV
+      - name: Grant execute permission for gradlew
+        if: runner.os == 'Linux'
+        run: chmod +x gradlew
 
       - name: Build with Gradle
         run: ./gradlew assemble --info
 
       - name: Upload build results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os }} Java ${{ matrix.java }} build results
           path: ${{ github.workspace }}/build/libs/
-
-    outputs:
-      project_name: ${{ steps.project_name.outputs.PROJECT_NAME }}
 
   test:
     name: Run unit tests
@@ -73,29 +60,24 @@ jobs:
       - build
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Common Setup
-        uses: ./.github/actions/common-setup
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.java }}
+          distribution: 'zulu'
+
+      - name: Grant execute permission for gradlew
+        if: runner.os == 'Linux'
+        run: chmod +x gradlew
 
       - name: Test with Gradle
         run: ./gradlew check --debug
 
       - name: Upload test results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os }} Java ${{ matrix.java }} test results
           path: ${{ github.workspace }}/build/reports/
@@ -105,43 +87,32 @@ jobs:
       - build
       - test
     runs-on: ubuntu-latest
-    if: github.ref_type == 'tag' || (github.ref_name == 'main' && github.event_name != 'schedule')
+    if: github.ref_type == 'tag'
     steps:
-      - name: Set snapshot environment
-        if: github.ref_name == 'main'
-        run: |
-          echo "RELEASE_TAG=0.0.0-RC-1" >> $GITHUB_ENV
-
-      - name: Set release environment
-        if: github.ref_type == 'tag'
-        run: |
-          echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
-
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Common Setup
-        uses: ./.github/actions/common-setup
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
           java-version: 17
+          distribution: 'zulu'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Publish with Gradle
-        run: ./gradlew -Pver=${{ env.RELEASE_TAG }} release
+        run: ./gradlew -Pver=${{ github.ref_name }} release
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        id: release
-        if: github.ref_type == 'tag'
+      - name: Upload artifact
+        uses: softprops/action-gh-release@v1
         with:
           files: ${{ github.workspace }}/build/libs/*
           generate_release_notes: true
           name: ${{ format('Release {0}', github.ref_name) }}
-          prerelease: ${{ contains(github.ref_name, '-rc-') }}
+          prerelease: ${{ endsWith(github.ref_name, '-rc') }}
           fail_on_unmatched_files: true
           draft: true
-
-    outputs:
-      url: ${{ steps.release.outputs.url }}
 
   notify:
     name: Send job complete notification
@@ -152,41 +123,39 @@ jobs:
       - release
     # Run if on main or tag
     if: always() && (github.ref_name == 'main' || github.ref_type == 'tag')
-    env:
-      PROJECT_NAME: ${{ needs.build.outputs.project_name }}
     steps:
-      - name: Set snapshot environment
+      - name: Set build environment
         if: github.ref_name == 'main'
         run: |
           echo "RELEASE_TYPE=snapshot" >> $GITHUB_ENV
-          echo "RELEASE_ADDR=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+          echo "RELEASE_ADDR=https://github.com/CrimsonWarpedcraft/plugin-template/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
 
-      - name: Set release draft environment
+      - name: Set release environment
         if: github.ref_type == 'tag'
         run: |
-          echo "RELEASE_TYPE=release draft" >> $GITHUB_ENV
-          echo "RELEASE_ADDR=${{ needs.release.outputs.url }}" >> $GITHUB_ENV
+          echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+          echo "RELEASE_ADDR=https://github.com/CrimsonWarpedcraft/plugin-template/releases/tag/${{ github.ref_name }}" >> $GITHUB_ENV
 
       - name: Notify on success
-        if: needs.build.result == 'success' && needs.test.result == 'success' && (needs.release.result == 'success' || github.event_name == 'schedule')
-        uses: appleboy/discord-action@v1.0.0
+        if: needs.build.result == 'success' && needs.test.result == 'success' && (github.ref_name == 'main' || needs.release.result == 'success')
+        uses: appleboy/discord-action@0.0.3
         with:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          color: "#00FF00"
-          username: "${{ env.PROJECT_NAME }} Release Bot"
+          color: "#DC143C"
+          username: "ExamplePlugin Release Bot"
           message: >
-            An ${{ env.PROJECT_NAME }} ${{ env.RELEASE_TYPE }} was deployed by ${{ github.actor }}:
+            An ExamplePlugin ${{ env.RELEASE_TYPE }} was deployed:
             ${{ env.RELEASE_ADDR }}
 
       - name: Notify on failure
         if: needs.build.result == 'failure' || needs.test.result == 'failure' || needs.release.result == 'failure'
-        uses: appleboy/discord-action@v1.0.0
+        uses: appleboy/discord-action@0.0.3
         with:
           webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          color: "#FF0000"
-          username: "${{ env.PROJECT_NAME }} Release Bot"
+          color: "#DC143C"
+          username: "ExamplePlugin Release Bot"
           message: >
-            An ${{ env.PROJECT_NAME }} ${{ env.RELEASE_TYPE }} ran by ${{ github.actor }} failed:
-            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            An ExamplePlugin ${{ env.RELEASE_TYPE }} failed:
+            https://github.com/sebs-scholarship/Blog/actions/runs/${{ github.run_id }}
