@@ -1,5 +1,5 @@
 grammar Expr;
-prog:   def* expr*;
+prog:   def* expr?;
 expr
     :   expr op=('*'|'/') expr #opexpr
     |   expr op=('+'|'-') expr #opexpr
