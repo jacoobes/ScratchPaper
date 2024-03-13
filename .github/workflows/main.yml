@@ -1,0 +1,192 @@
+name: Build, Test, and Release
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*' # For v1.0, v0.1.0, etc
+  pull_request:
+    branches:
+      - 'main'
+  schedule:
+    - cron: '0 0 * * 6'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ format('{0}-{1}', github.job, github.ref) }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        java: [ 17 ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Common Setup
+        uses: ./.github/actions/common-setup
+        with:
+          java-version: ${{ matrix.java }}
+
+      - name: Retrieve Project Name
+        run: echo "PROJECT_NAME=$(${{github.workspace}}/gradlew -q printProjectName)" >> $GITHUB_OUTPUT
+        id: project_name
+
+      - name: Get Project Name
+        run: echo "PROJECT_NAME=${{steps.project_name.outputs.PROJECT_NAME}}" >> $GITHUB_ENV
+
+      - name: Build with Gradle
+        run: ./gradlew assemble --info
+
+      - name: Upload build results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }} Java ${{ matrix.java }} build results
+          path: ${{ github.workspace }}/build/libs/
+
+    outputs:
+      project_name: ${{ steps.project_name.outputs.PROJECT_NAME }}
+
+  test:
+    name: Run unit tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        java: [ 17 ]
+    needs:
+      - build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Common Setup
+        uses: ./.github/actions/common-setup
+        with:
+          java-version: ${{ matrix.java }}
+
+      - name: Test with Gradle
+        run: ./gradlew check --debug
+
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }} Java ${{ matrix.java }} test results
+          path: ${{ github.workspace }}/build/reports/
+
+  release:
+    needs:
+      - build
+      - test
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' || (github.ref_name == 'main' && github.event_name != 'schedule')
+    steps:
+      - name: Set snapshot environment
+        if: github.ref_name == 'main'
+        run: |
+          echo "RELEASE_TAG=0.0.0-RC-1" >> $GITHUB_ENV
+
+      - name: Set release environment
+        if: github.ref_type == 'tag'
+        run: |
+          echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Common Setup
+        uses: ./.github/actions/common-setup
+        with:
+          java-version: 17
+
+      - name: Publish with Gradle
+        run: ./gradlew -Pver=${{ env.RELEASE_TAG }} release
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        id: release
+        if: github.ref_type == 'tag'
+        with:
+          files: ${{ github.workspace }}/build/libs/*
+          generate_release_notes: true
+          name: ${{ format('Release {0}', github.ref_name) }}
+          prerelease: ${{ contains(github.ref_name, '-rc-') }}
+          fail_on_unmatched_files: true
+          draft: true
+
+    outputs:
+      url: ${{ steps.release.outputs.url }}
+
+  notify:
+    name: Send job complete notification
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test
+      - release
+    # Run if on main or tag
+    if: always() && (github.ref_name == 'main' || github.ref_type == 'tag')
+    env:
+      PROJECT_NAME: ${{ needs.build.outputs.project_name }}
+    steps:
+      - name: Set snapshot environment
+        if: github.ref_name == 'main'
+        run: |
+          echo "RELEASE_TYPE=snapshot" >> $GITHUB_ENV
+          echo "RELEASE_ADDR=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+
+      - name: Set release draft environment
+        if: github.ref_type == 'tag'
+        run: |
+          echo "RELEASE_TYPE=release draft" >> $GITHUB_ENV
+          echo "RELEASE_ADDR=${{ needs.release.outputs.url }}" >> $GITHUB_ENV
+
+      - name: Notify on success
+        if: needs.build.result == 'success' && needs.test.result == 'success' && (needs.release.result == 'success' || github.event_name == 'schedule')
+        uses: appleboy/discord-action@v1.0.0
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          color: "#00FF00"
+          username: "${{ env.PROJECT_NAME }} Release Bot"
+          message: >
+            An ${{ env.PROJECT_NAME }} ${{ env.RELEASE_TYPE }} was deployed by ${{ github.actor }}:
+            ${{ env.RELEASE_ADDR }}
+
+      - name: Notify on failure
+        if: needs.build.result == 'failure' || needs.test.result == 'failure' || needs.release.result == 'failure'
+        uses: appleboy/discord-action@v1.0.0
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          color: "#FF0000"
+          username: "${{ env.PROJECT_NAME }} Release Bot"
+          message: >
+            An ${{ env.PROJECT_NAME }} ${{ env.RELEASE_TYPE }} ran by ${{ github.actor }} failed:
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
