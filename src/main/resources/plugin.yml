@@ -2,12 +2,12 @@ main: ${PACKAGE}.${NAME}
 name: ${NAME}
 version: "${VERSION}"
 api-version: "1.16"
-author: AUTHOR
-description: DESCRIPTION
+author: Jacoobes
+description: math in the command line
 commands:
   ex:
     description: Base command for EXAMPLE
-    usage: "For a list of commands, type /ex help"
+    usage: "To get 2, /eval 1 + 1"
     aliases: example
 permissions:
   example.test:

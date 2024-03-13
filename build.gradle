@@ -1,14 +1,13 @@
-import com.github.spotbugs.snom.SpotBugsTask
 import java.text.SimpleDateFormat
 
 plugins {
-    id 'checkstyle'
-    id "com.github.spotbugs" version "6.0.8"
     id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'java'
+    id 'antlr'
 }
 
-group = "com.crimsonwarpedcraft.exampleplugin"
+
+group = "com.jacoobes.scratchpaper"
 
 static def getTime() {
     SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd-HHmm")
@@ -59,8 +58,7 @@ dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
     implementation 'io.papermc:paperlib:1.0.8'
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.13.0'
-    testCompileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
+    antlr "org.antlr:antlr4:4.7" // use ANTLR version 4
     testImplementation 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
@@ -76,32 +74,14 @@ processResources {
     }
 }
 
-checkstyle {
-    toolVersion '10.14.0'
-    maxWarnings = 0
+def generatedSrcDir = "src/main/java/com/jacoobes/scratchpaper"
+generateGrammarSource {
+    arguments += ["-visitor", "-no-listener", "-package", "com.jacoobes.scratchpaper"]
+    outputDirectory = file(generatedSrcDir)
 }
 
-configurations.checkstyle {
-    resolutionStrategy.capabilitiesResolution.withCapability("com.google.collections:google-collections") {
-        select("com.google.guava:guava:23.0")
-    }
-}
 
-tasks.withType(Checkstyle).configureEach {
-    reports {
-        xml.required = false
-        html.required = true
-    }
-}
 
-tasks.withType(SpotBugsTask).configureEach {
-    reports.create("html") {
-        required = true
-    }
-    reports.create("xml") {
-        required = false
-    }
-}
 
 shadowJar {
     archiveClassifier.set('')

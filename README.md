@@ -76,7 +76,7 @@ rootProject.name = 'ExamplePlugin'
 Make sure to update the `group` to your package's name in the following section.
 
 ```groovy
-group = "com.crimsonwarpedcraft.exampleplugin"
+group = "com.crimsonwarpedcraft.evalplugin"
 ```
 
 Add any required repositories for your dependencies in the following section.
