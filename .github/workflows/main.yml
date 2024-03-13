@@ -166,27 +166,3 @@ jobs:
         run: |
           echo "RELEASE_TYPE=release draft" >> $GITHUB_ENV
           echo "RELEASE_ADDR=${{ needs.release.outputs.url }}" >> $GITHUB_ENV
-
-      - name: Notify on success
-        if: needs.build.result == 'success' && needs.test.result == 'success' && (needs.release.result == 'success' || github.event_name == 'schedule')
-        uses: appleboy/discord-action@v1.0.0
-        with:
-          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
-          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          color: "#00FF00"
-          username: "${{ env.PROJECT_NAME }} Release Bot"
-          message: >
-            An ${{ env.PROJECT_NAME }} ${{ env.RELEASE_TYPE }} was deployed by ${{ github.actor }}:
-            ${{ env.RELEASE_ADDR }}
-
-      - name: Notify on failure
-        if: needs.build.result == 'failure' || needs.test.result == 'failure' || needs.release.result == 'failure'
-        uses: appleboy/discord-action@v1.0.0
-        with:
-          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
-          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          color: "#FF0000"
-          username: "${{ env.PROJECT_NAME }} Release Bot"
-          message: >
-            An ${{ env.PROJECT_NAME }} ${{ env.RELEASE_TYPE }} ran by ${{ github.actor }} failed:
-            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

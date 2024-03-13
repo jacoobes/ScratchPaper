@@ -6,7 +6,6 @@ A template for building PaperMC/Spigot Minecraft server plugins!
 ## Features
 ### Github Actions 🎬
 * Automated builds, testing, and release drafting
-* [Discord notifcations](https://github.com/marketplace/actions/discord-message-notify) for snapshots and releases
 
 ### Bots 🤖
 * **Probot: Stale**
@@ -50,34 +49,7 @@ Development versions of this repo are pushed to the master branch and are **not*
 | Tag `vX.Y.Z-RC-N` | X.Y.Z-SNAPSHOT       | Build, test, release, and notify | Pre-release           |
 | Tag `vX.Y.Z`      | X.Y.Z                | Build, test, release, and notify | Release               |
 
-### Discord Notifications
-In order to use Discord notifications, you will need to create two GitHub secrets. `DISCORD_WEBHOOK_ID` 
-should be set to the id of your Discord webhook. `DISCORD_WEBHOOK_TOKEN` will be the token for the webhook.
 
-You can find these values by copying the Discord Webhook URL:  
-`https://discord.com/api/webhooks/<DISCORD_WEBHOOK_ID>/<DISCORD_WEBHOOK_TOKEN>`
-
-For more information, see [Discord Message Notify](https://github.com/marketplace/actions/discord-message-notify).
-
----
-
-**I've broken the rest of the changes up by their files to make things a bit easier to find.**
-
----
-
-### settings.gradle
-Update the line below with the name of your plugin.
-
-```groovy
-rootProject.name = 'ExamplePlugin'
-```
-
-### build.gradle
-Make sure to update the `group` to your package's name in the following section.
-
-```groovy
-group = "com.crimsonwarpedcraft.evalplugin"
-```
 
 Add any required repositories for your dependencies in the following section.
 
