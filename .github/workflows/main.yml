@@ -6,9 +6,13 @@ on:
       - 'main'
     tags:
       - 'v*' # For v1.0, v0.1.0, etc
+    paths:
+      - 'src/main/java/**'
   pull_request:
     branches:
       - 'main'
+    paths:
+      - 'src/main/java/**'
   schedule:
     - cron: '0 0 * * 6'
   workflow_dispatch:
