@@ -3,9 +3,12 @@
 > I hate pulling out my calculator to do math for my redstone projects
 ```
 fn slope(m,x,b) = m*x+b;
-slope(1,5,2);
+slope(1,5,2)
 ```
-
+## Usage
+```
+/eval <program>
+```
 ## Features
 - Add, subtract, multiply, divide numbers in the minecraft commandline.
 - Create simple functions to remove redundant routines.
