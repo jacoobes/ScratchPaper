@@ -5,16 +5,15 @@ api-version: "1.16"
 author: Jacoobes
 description: math in the command line
 commands:
-  ex:
-    description: Base command for EXAMPLE
+  eval:
+    description: Evaluate math on the command lnie
     usage: "To get 2, /eval 1 + 1"
-    aliases: example
 permissions:
-  example.test:
+  eval.test:
     description: DESCRIPTION
     default: true
-  example.*:
+  eval.*:
     description: Grants all other permissions
     default: false
     children:
-      example.test: true
+      eval.test: true
