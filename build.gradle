@@ -48,6 +48,8 @@ repositories {
             includeModule("io.papermc.paper", "paper-api")
             includeModule("io.papermc", "paperlib")
             includeModule("net.md-5", "bungeecord-chat")
+            includeModule("net.kyori", "adventure-bom")
+
         }
     }
 
