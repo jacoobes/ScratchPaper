@@ -1,7 +1,7 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'io.github.goooler.shadow' version "8.1.8"
     id 'java'
     id 'antlr'
 }
@@ -36,21 +36,14 @@ if (shortVersion == null || shortVersion == "") {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
     maven {
         name 'papermc'
         url 'https://repo.papermc.io/repository/maven-public/'
-        content {
-            includeModule("io.papermc.paper", "paper-api")
-            includeModule("io.papermc", "paperlib")
-            includeModule("net.md-5", "bungeecord-chat")
-            includeModule("net.kyori", "adventure-bom")
-
-        }
     }
 
     mavenCentral()
