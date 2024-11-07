@@ -93,4 +93,11 @@ public class EvalTest {
     double result = evalExpression(expression);
     assertEquals(10, result, 0.0001);
   }
+
+  @Test
+  public void testNativeRand() {
+    String expression = "rand(0,10)";
+    double result = evalExpression(expression);
+    assertTrue(result>=0 && result<=10);
+  }
 }
