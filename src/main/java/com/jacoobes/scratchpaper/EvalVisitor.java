@@ -20,13 +20,14 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
          } catch (ClassNotFoundException e) {
              throw new RuntimeException("Could not find java.lang.Math");
          }
-         Method max, sin, cos, rad, min;
+         Method max, sin, cos, rad, min, rand;
          try {
              max = _math.getDeclaredMethod("max", double.class, double.class);
              min = _math.getDeclaredMethod("min", double.class, double.class);
              sin = _math.getDeclaredMethod("sin", double.class);
              cos = _math.getDeclaredMethod("cos", double.class);
              rad = _math.getDeclaredMethod("toRadians", double.class);
+             rand = this.getClass().getDeclaredMethod("rand", double.class, double.class);
          } catch (NoSuchMethodException e) {
              throw new RuntimeException(e);
          }
@@ -35,6 +36,18 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
          natives.put("sin", sin);
          natives.put("cos", cos);
          natives.put("rad", rad);
+         natives.put("rand", rand);
+     }
+
+     public static double rand(double limit1,double limit2){
+         double temp;
+         if(limit1==limit2) return limit1;
+         if(limit2<limit1){
+             temp=limit1;
+             limit1=limit2;
+             limit2=temp;
+         }
+         return limit1 + (Math.random() * (limit2 - limit1));
      }
     @Override
     public Double visitParen(ExprParser.ParenContext ctx) {
