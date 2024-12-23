@@ -15,8 +15,10 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
     protected HashMap<String, Method> natives = new HashMap<>();
      {
          Class<?> _math;
+         Class<?> _thisclass;
          try {
              _math = Class.forName("java.lang.Math");
+             _thisclass = Class.forName("com.jacoobes.scratchpaper.EvalVisitor");
          } catch (ClassNotFoundException e) {
              throw new RuntimeException("Could not find java.lang.Math");
          }
@@ -27,7 +29,7 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
              sin = _math.getDeclaredMethod("sin", double.class);
              cos = _math.getDeclaredMethod("cos", double.class);
              rad = _math.getDeclaredMethod("toRadians", double.class);
-             rand = this.getClass().getDeclaredMethod("rand", double.class, double.class);
+             rand = _thisclass.getDeclaredMethod("rand", double.class, double.class);
          } catch (NoSuchMethodException e) {
              throw new RuntimeException(e);
          }
