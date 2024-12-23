@@ -53,8 +53,18 @@ Built in constants are `PI`, `E`, `CHUNK`, `SIG_MAX`
 - This is a gradle project, and two main scripts exist
   - I use intellij to simplify the workflow.
 - Running on graal jdk 21 while developing.
-- generateGrammarSource
-- build
+  
+## Building the JAR
+
+To build the JAR file using Gradle, follow these steps:
+
+1. Ensure you have Gradle installed. Usually Intellij has it built into the IDE.
+   - If not, you can install following these instructions [here](https://gradle.org/install/).
+3. Open a terminal and navigate to the root directory of the repository.
+4. Run the following command to build the JAR file:
+   ```sh
+   ./gradlew build
+5. If you are using intellij, run the build script might be easier
 
 ## Contributing
 - [Open Issues](https://github.com/jacoobes/ScratchPaper/issues)
