@@ -2,9 +2,9 @@
 ## A Minecraft plugin with a Math DSL
 > I hate pulling out my calculator to do math for my redstone projects
 ```
-fn slope(m,x,b) = m*x+b;
-slope(1,5,2)
+cmp(1,5,2)
 ```
+> `cmp()` compare signal strengths, just like a comparator
 ## Usage
 ```
 /eval <program>
