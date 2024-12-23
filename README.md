@@ -29,7 +29,7 @@ fn ident(id, id1, id2) = expr
 fn ident() = expr
 ```
 ### Expressions
-Basically, any math calculator
+Basically, any math calculator, positive numbers only!
 ```js
 1 + 2 - 5
 ``` 
@@ -40,16 +40,24 @@ sin(rad(0))
 - yields `.49999`
 
 ### Constants
-Built in constants are `PI`, `E`, `CHUNK`
+Built in constants are `PI`, `E`, `CHUNK`, `SIG_MAX`
 - A CHUNK is 16 ( in minecraft )
+- SIG_MAX is 15 (the maximum signal strength of redstone)
+
+### Calculate signal strength
+- natives `cmp`, `cmp_sub`
+
+
 
 ## Developing
 - This is a gradle project, and two main scripts exist
   - I use intellij to simplify the workflow.
-  - I don't know how to use anything else for java applications
+- Running on graal jdk 21 while developing.
 - generateGrammarSource
 - build
+
 ## Contributing
+- [Open Issues](https://github.com/jacoobes/ScratchPaper/issues)
 - [Read this](./CONTRIBUTING.md)
 - Open a pull request.
 - I'll review it!

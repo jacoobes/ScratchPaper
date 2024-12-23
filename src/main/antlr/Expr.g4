@@ -27,4 +27,4 @@ FLOAT   : INT+ '.' INT*
 
 NEWLINE : [\r\n ]+ -> skip ;
 INT     : [0-9]+;
-ID      : [a-zA-Z]+;
+ID      : [a-zA-Z_]+;

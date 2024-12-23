@@ -3,15 +3,14 @@ import io.papermc.lib.PaperLib;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * Created by Levi Muniz on 7/29/20.
+ * Created by Jacob Nguyen.
  *
- * @author Copyright (c) Levi Muniz. All Rights Reserved.
+ * @author Copyright (c) Jacob Nguyen. All Rights Reserved.
  */
 public class ScratchPaper extends JavaPlugin {
     @Override
@@ -25,15 +24,15 @@ public class ScratchPaper extends JavaPlugin {
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("eval")) {
             if (args.length == 0) {
-                sender.sendMessage(ChatColor.RED + "Usage: /eval <expression>");
+                sender.sendPlainMessage("Usage: /eval <expression>");
                 return true;
             }
             var expression = String.join(" ", args);
             try {
                 double result = evaluateExpression(expression);
-                sender.sendMessage(ChatColor.GREEN + Double.toString(result));
+                sender.sendPlainMessage(Double.toString(result));
             } catch (Exception e) {
-                sender.sendMessage(ChatColor.RED + e.getMessage());
+                sender.sendPlainMessage(e.getMessage());
             }
             return true;
         }

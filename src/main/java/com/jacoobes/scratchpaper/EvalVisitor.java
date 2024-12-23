@@ -22,7 +22,9 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
          } catch (ClassNotFoundException e) {
              throw new RuntimeException("Could not find java.lang.Math");
          }
-         Method max, sin, cos, rad, min, rand;
+         Method max, sin, cos,
+                rad, min, rand,
+                tan, cmpSub, cmp;
          try {
              max = _math.getDeclaredMethod("max", double.class, double.class);
              min = _math.getDeclaredMethod("min", double.class, double.class);
@@ -30,6 +32,9 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
              cos = _math.getDeclaredMethod("cos", double.class);
              rad = _math.getDeclaredMethod("toRadians", double.class);
              rand = _thisclass.getDeclaredMethod("rand", double.class, double.class);
+             tan = _math.getDeclaredMethod("tan", double.class);
+             cmp  = _thisclass.getDeclaredMethod("cmp", double.class, double.class, double.class);
+             cmpSub = _thisclass.getDeclaredMethod("cmpSub", double.class, double.class, double.class);
          } catch (NoSuchMethodException e) {
              throw new RuntimeException(e);
          }
@@ -39,8 +44,21 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
          natives.put("cos", cos);
          natives.put("rad", rad);
          natives.put("rand", rand);
+         natives.put("tan", tan);
+         natives.put("cmp", cmp);
+         natives.put("cmp_sub", cmpSub);
      }
-
+     public static double cmp(double rear, double left, double right) {
+         //output = rear × [left ≤ rear AND right ≤ rear]
+        if(left > rear || right > rear) {
+            return 0;
+        }
+        return rear;
+     }
+     public static double cmpSub(double rear, double left, double right) {
+         //output = max(rear − max(left, right), 0)
+         return Math.max(rear - Math.max(left, right), 0);
+     }
      public static double rand(double limit1,double limit2){
          double temp;
          if(limit1==limit2) return limit1;
@@ -127,6 +145,9 @@ public class EvalVisitor extends ExprBaseVisitor<Double> {
             case "CHUNK" -> 16.;
             case "PI" -> Math.PI;
             case "E" -> Math.E;
+            case "T" -> 1.;
+            case "F" -> 0.;
+            case "SIG_MAX" -> 15.;
             default -> throw new IllegalStateException("Unexpected value: " + ctx.getText());
         };
     }

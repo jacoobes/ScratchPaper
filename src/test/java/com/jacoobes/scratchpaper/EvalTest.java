@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
 public class EvalTest {
-
+  private static final double DELTA = 1e-10;
   private Double evalExpression(String expression) {
     var Lexer = new ExprLexer(CharStreams.fromString(expression));
     var Parser = new ExprParser(new CommonTokenStream(Lexer));
@@ -99,5 +99,84 @@ public class EvalTest {
     String expression = "rand(0,10)";
     double result = evalExpression(expression);
     assertTrue(result>=0 && result<=10);
+  }
+
+  @Test
+  public  void testNativeTanRadian() {
+    String expression = "tan(rad(0))";
+    double result = evalExpression(expression);
+    assertEquals(0, result);
+  }
+  @Test
+  public  void testNativeTanAngle() {
+    String expression = "tan(45)";
+    double result = evalExpression(expression);
+    assertEquals(0.999, result, 1);
+  }
+
+  @Test
+  public void testTrue() {
+    String expression = "T";
+    double result = evalExpression(expression);
+    assertEquals(result, 1);
+  }
+  @Test
+  public void testFalse() {
+    String expression = "F";
+    double result = evalExpression(expression);
+    assertEquals(result, 0);
+  }
+  @Test
+  public void testRSignalMax() {
+    String expression = "SIG_MAX";
+    double result = evalExpression(expression);
+    assertEquals(result, 15);
+  }
+  @Test
+  public void testCmp() {
+    String expression = "cmp(5, 3, 4)";
+    double result = evalExpression(expression);
+    assertEquals(5.0, result, DELTA);
+  }
+
+  @Test
+  public void testCmpFalse() {
+    String expression = "cmp(5, 6, 4)";
+    double result = evalExpression(expression);
+    assertEquals(0.0, result, DELTA);
+  }
+
+  @Test
+  public void testCmpEqual() {
+    String expression = "cmp(5, 5, 5)";
+    double result = evalExpression(expression);
+    assertEquals(5.0, result, DELTA);
+  }
+
+  @Test
+  public void testCmpZero() {
+    String expression = "cmp(0, 0, 0)";
+    double result = evalExpression(expression);
+    assertEquals(0.0, result, DELTA);
+  }
+  @Test
+  public void testCmpSub() {
+    String expression = "cmp_sub(5, 3, 4)";
+    double result = evalExpression(expression);
+    assertEquals(1.0, result, DELTA);
+  }
+
+  @Test
+  public void testCmpSubZero() {
+    String expression = "cmp_sub(5, 6, 4)";
+    double result = evalExpression(expression);
+    assertEquals(0.0, result, DELTA);
+  }
+
+  @Test
+  public void testCmpSubEqual() {
+    String expression = "cmp_sub(5, 5, 5)";
+    double result = evalExpression(expression);
+    assertEquals(0.0, result, DELTA);
   }
 }
