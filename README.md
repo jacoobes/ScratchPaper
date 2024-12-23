@@ -1,5 +1,5 @@
 # ScratchPaper
-## A Minecraft plugin with a Math DSL
+## A Minecraft plugin with a Math DSL for Redstone Programming
 > I hate pulling out my calculator to do math for my redstone projects
 ```
 cmp(1,5,2)
