@@ -45,6 +45,7 @@ repositories {
         name 'papermc'
         url 'https://repo.papermc.io/repository/maven-public/'
     }
+
     mavenCentral()
 
 }
@@ -86,7 +87,7 @@ test {
 
 processResources {
     filesMatching("**/plugin.yml") {
-        expand(NAME: rootProject.name, VERSION: version, PACKAGE: project.group.toString())
+        expand ( NAME: rootProject.name, VERSION: version, PACKAGE: project.group.toString() )
     }
 }
 
@@ -98,7 +99,7 @@ generateGrammarSource {
 
 
 shadowJar {
-    archiveClassifier.set('')  // Ensure the JAR has no classifier
+    archiveClassifier.set('')
     relocate 'io.papermc.lib', 'shadow.io.papermc.paperlib'
     minimize()
 }
@@ -114,14 +115,17 @@ tasks.register('printProjectName') {
 }
 
 tasks.register('release') {
-    dependsOn build  // Ensure shadowJar is executed before release
+    dependsOn build
+
     doLast {
         if (!version.endsWith("-SNAPSHOT")) {
             // Rename final JAR to trim off version information
             shadowJar.archiveFile.get().getAsFile()
-                    .renameTo(layout.buildDirectory.get().toString() + File.separator + 'libs' + File.separator + rootProject.name + '.jar')
+                    .renameTo(layout.buildDirectory.get().toString() + File.separator + 'libs' + File.separator
+                            + rootProject.name + '.jar')
         }
-
     }
+
     finalizedBy(publish)
+
 }
