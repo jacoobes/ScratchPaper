@@ -4,8 +4,8 @@ plugins {
     id 'io.github.goooler.shadow' version "8.1.8"
     id 'java'
     id 'antlr'
+    id 'maven-publish'
 }
-
 
 group = "com.jacoobes.scratchpaper"
 
@@ -45,8 +45,29 @@ repositories {
         name 'papermc'
         url 'https://repo.papermc.io/repository/maven-public/'
     }
-
     mavenCentral()
+
+}
+publishing {
+    publications(publications -> {
+        publications.create("mavenJava", MavenPublication.class, publication -> {
+            publication.from(components.java)
+            publication.setGroupId(project.getGroup().toString())
+            publication.setArtifactId(project.getName())
+            publication.setVersion(project.getVersion().toString())
+        })
+    })
+
+    repositories(repositories -> {
+        repositories.maven(repo -> {
+            repo.setName("ScratchPaper")
+            repo.setUrl(uri(findProperty("uri") != null ? findProperty("uri").toString() : System.getenv("URI")))
+            repo.credentials(passwordCredentials -> {
+                passwordCredentials.setUsername(findProperty("mavenUser") != null ? findProperty("mavenUser").toString() : System.getenv("MAVEN_USER"))
+                passwordCredentials.setPassword(findProperty("mavenPassword") != null ? findProperty("mavenPassword").toString() : System.getenv("MAVEN_PASSWORD"))
+            })
+        })
+    })
 }
 
 dependencies {
@@ -65,7 +86,7 @@ test {
 
 processResources {
     filesMatching("**/plugin.yml") {
-        expand ( NAME: rootProject.name, VERSION: version, PACKAGE: project.group.toString() )
+        expand(NAME: rootProject.name, VERSION: version, PACKAGE: project.group.toString())
     }
 }
 
@@ -76,10 +97,8 @@ generateGrammarSource {
 }
 
 
-
-
 shadowJar {
-    archiveClassifier.set('')
+    archiveClassifier.set('')  // Ensure the JAR has no classifier
     relocate 'io.papermc.lib', 'shadow.io.papermc.paperlib'
     minimize()
 }
@@ -95,14 +114,14 @@ tasks.register('printProjectName') {
 }
 
 tasks.register('release') {
-    dependsOn build
-
+    dependsOn build  // Ensure shadowJar is executed before release
     doLast {
         if (!version.endsWith("-SNAPSHOT")) {
             // Rename final JAR to trim off version information
             shadowJar.archiveFile.get().getAsFile()
-                    .renameTo(layout.buildDirectory.get().toString() + File.separator + 'libs' + File.separator
-                            + rootProject.name + '.jar')
+                    .renameTo(layout.buildDirectory.get().toString() + File.separator + 'libs' + File.separator + rootProject.name + '.jar')
         }
+
     }
+    finalizedBy(publish)
 }
