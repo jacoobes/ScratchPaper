@@ -8,6 +8,7 @@ plugins {
 }
 
 group = "com.jacoobes"
+String ver = 'RC-1.2'
 
 static def getTime() {
     SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd-HHmm")
