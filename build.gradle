@@ -4,10 +4,11 @@ plugins {
     id 'io.github.goooler.shadow' version "8.1.8"
     id 'java'
     id 'antlr'
+    id 'maven-publish'
 }
 
+group = "com.jacoobes"
 String ver = 'RC-1.2'
-group = "com.jacoobes.scratchpaper"
 
 static def getTime() {
     SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd-HHmm")
@@ -47,6 +48,33 @@ repositories {
     }
 
     mavenCentral()
+
+}
+String Uri = ""
+if (version.endsWith("-SNAPSHOT")) {
+    Uri = "snapshots"
+} else Uri = "releases"
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifact(shadowJar.archiveFile) {
+                classifier = ""
+            }
+            groupId = group.toString()
+            artifactId = project.name
+            version = version.toString()
+        }
+    }
+
+    repositories(repositories -> {
+        repositories.maven(repo -> {
+            repo.setUrl(uri(findProperty("uri") != null ? findProperty("uri").toString()+Uri : System.getenv("URI")+Uri))
+            repo.credentials(passwordCredentials -> {
+                passwordCredentials.setUsername(findProperty("mavenUser") != null ? findProperty("mavenUser").toString() : System.getenv("MAVEN_USER"))
+                passwordCredentials.setPassword(findProperty("mavenPassword") != null ? findProperty("mavenPassword").toString() : System.getenv("MAVEN_PASSWORD"))
+            })
+        })
+    })
 }
 
 dependencies {
@@ -76,8 +104,6 @@ generateGrammarSource {
 }
 
 
-
-
 shadowJar {
     archiveClassifier.set('')
     relocate 'io.papermc.lib', 'shadow.io.papermc.paperlib'
@@ -102,7 +128,7 @@ tasks.register('release') {
             // Rename final JAR to trim off version information
             shadowJar.archiveFile.get().getAsFile()
                     .renameTo(layout.buildDirectory.get().toString() + File.separator + 'libs' + File.separator
-                            + rootProject.name + '.jar')
+                            + rootProject.name + "-" + version + '.jar')
         }
     }
 }
