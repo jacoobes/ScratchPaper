@@ -7,7 +7,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = "com.jacoobes.scratchpaper"
+group = "com.jacoobes"
 
 static def getTime() {
     SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd-HHmm")
@@ -49,20 +49,25 @@ repositories {
     mavenCentral()
 
 }
+String Uri = ""
+if (version.endsWith("-SNAPSHOT")) {
+    Uri = "snapshots"
+} else Uri = "releases"
 publishing {
-    publications(publications -> {
-        publications.create("mavenJava", MavenPublication.class, publication -> {
-            publication.from(components.java)
-            publication.setGroupId(project.getGroup().toString())
-            publication.setArtifactId(project.getName())
-            publication.setVersion(project.getVersion().toString())
-        })
-    })
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifact(shadowJar.archiveFile) {
+                classifier = ""
+            }
+            groupId = group.toString()
+            artifactId = project.name
+            version = version.toString()
+        }
+    }
 
     repositories(repositories -> {
         repositories.maven(repo -> {
-            repo.setName("ScratchPaper")
-            repo.setUrl(uri(findProperty("uri") != null ? findProperty("uri").toString() : System.getenv("URI")))
+            repo.setUrl(uri(findProperty("uri") != null ? findProperty("uri").toString()+Uri : System.getenv("URI")+Uri))
             repo.credentials(passwordCredentials -> {
                 passwordCredentials.setUsername(findProperty("mavenUser") != null ? findProperty("mavenUser").toString() : System.getenv("MAVEN_USER"))
                 passwordCredentials.setPassword(findProperty("mavenPassword") != null ? findProperty("mavenPassword").toString() : System.getenv("MAVEN_PASSWORD"))
@@ -122,10 +127,7 @@ tasks.register('release') {
             // Rename final JAR to trim off version information
             shadowJar.archiveFile.get().getAsFile()
                     .renameTo(layout.buildDirectory.get().toString() + File.separator + 'libs' + File.separator
-                            + rootProject.name + '.jar')
+                            + rootProject.name + "-" + version + '.jar')
         }
     }
-
-    finalizedBy(publish)
-
 }
