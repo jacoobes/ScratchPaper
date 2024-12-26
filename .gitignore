@@ -2,3 +2,4 @@
 build/
 src/main/java/com/jacoobes/scratchpaper/Expr*.*
 .idea
+gradle.properties
