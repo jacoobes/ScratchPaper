@@ -79,7 +79,7 @@ publishing {
 
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT'
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.9.1'
     implementation 'io.papermc:paperlib:1.0.8'
     antlr "org.antlr:antlr4:4.13.2" // use ANTLR version 4
     testImplementation 'io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT'
